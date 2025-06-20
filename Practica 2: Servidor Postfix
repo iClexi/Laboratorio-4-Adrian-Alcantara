@@ -1,0 +1,36 @@
+sudo apt update
+sudo apt install postfix mailutils libsasl2-modules ca-certificates -y
+
+host smtp.gmail.com
+
+sudo nano /etc/resolv.conf
+
+
+sudo sh -c 'hostname -f > /etc/mailname'
+
+sudo nano /etc/postfix/main.cf
+
+myhostname       = $(hostname -f)
+myorigin         = /etc/mailname
+inet_interfaces  = all
+inet_protocols            = ipv4
+smtp_address_preference   = ipv4
+relayhost = [smtp.gmail.com]:587
+smtp_sasl_auth_enable        = yes
+smtp_sasl_password_maps      = hash:/etc/postfix/sasl_passwd
+smtp_sasl_security_options   = noanonymous
+smtp_sasl_tls_security_options = noanonymous
+smtp_use_tls                 = yes
+smtp_tls_security_level      = encrypt
+smtp_tls_CAfile              = /etc/ssl/certs/ca-certificates.crt
+
+
+sudo nano /etc/postfix/sasl_passwd
+
+[smtp.gmail.com]:587    tu.usuario@gmail.com:abcdefghijklmnop
+
+sudo postmap /etc/postfix/sasl_passwd
+
+sudo systemctl restart postfix
+
+echo "Michael Robles – 20250845" | mail -s "MambruSeFueALaGuerra" os3conadrian@gmail.com
