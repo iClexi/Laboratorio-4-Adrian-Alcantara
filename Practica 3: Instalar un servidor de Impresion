@@ -1,0 +1,55 @@
+Configuración de CUPS + Impresora Virtual PDF en Ubuntu Server
+Servidor Ubuntu: 10.0.0.200
+
+
+sudo apt update
+sudo apt install cups cups-pdf -y
+
+
+
+sudo cupsctl --remote-admin --remote-any --share-printers
+
+
+sudo usermod -aG lpadmin michael20250845
+sudo usermod -aG lpadmin root
+
+
+
+sudo systemctl restart cups
+sudo systemctl status cups
+
+
+ En  navegador cliente:
+  10.0.0.200:631
+ Administration → Add Printer.
+Continuar en modo no seguro
+Autentícacion:
+Usuario: michael20250845 
+Contrasena: michael20250845
+ Selecciono CUPS-PDF (Virtual PDF Printer).
+Nombre:PDFlol
+Driver: Generic
+Modelo: Generic w/no options
+
+
+ Panel de Control → Dispositivos e impresoras.
+ Agregar impresora → si la impresora aparece sin darle a mi impresora no esta en la lista: Ve a la prueba de impresion
+Por el contrario si la impresora no está en la lista., seguir:
+Dar click en "Mi impresora no esta en la lista"
+ Agregar impresora usando dirección TCP/IP:
+   Dirección IP: 10.0.0.200
+ Cuando pida controlador:
+   Fabricante: Generic
+   Impresora: Generic / PostScript Printer.
+
+
+Word
+Guardar archivo como HOLA.docx
+Imprimir con impresora de cups
+
+Linux
+   ls -l /var/spool/cups-pdf/
+cd /var/spool/cups-pdf/ANONYMOUS
+ls 
+Microsoft_Word_-_HOLA.docx.pdf
+cat Microsoft_Word_-_HOLA.docx.pdf
