@@ -10,7 +10,7 @@ sudo sh -c 'hostname -f > /etc/mailname'
 
 sudo nano /etc/postfix/main.cf
 
-myhostname       = $(hostname -f)
+myhostname       = hostname    # <-- usa tu FQDN real aquí
 myorigin         = /etc/mailname
 inet_interfaces  = all
 inet_protocols            = ipv4
