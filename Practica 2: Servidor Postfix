@@ -1,19 +1,48 @@
+GUÍA PASO A PASO PARA CONFIGURAR POSTFIX CON GMAIL COMO RELAY SMTP
+
+OBJETIVO:
+Configurar Postfix en Ubuntu para enviar correos salientes a través de Gmail (puerto 587 con TLS) usando autenticación SASL, y realizar una prueba de envío.
+
+REQUISITOS IMPORTANTES:
+- Tener activado el 2FA en tu cuenta de Google.
+- Generar un “App Password” (contraseña de aplicación) de 16 caracteres para Gmail (NO es tu contraseña normal).
+- Opcional: Tener un FQDN (hostname completo) coherente, por ejemplo: mail.tudominio.com.
+
+------------------------------------------------------------
+1) ACTUALIZAR REPOS E INSTALAR PAQUETES
+------------------------------------------------------------
 sudo apt update
 sudo apt install postfix mailutils libsasl2-modules ca-certificates -y
 
-host smtp.gmail.com
+Explicación:
+postfix = agente de transporte de correo (MTA).
+mailutils = comando “mail” para pruebas de envío.
+libsasl2-modules = módulos SASL para autenticarse contra Gmail.
+ca-certificates = certificados raíz para validar TLS con Gmail.
 
-sudo nano /etc/resolv.conf
+Durante la instalación de Postfix:
+- Selecciona “Internet Site” y pulsa ENTER.
+- El “System mail name” lo ajustaremos correctamente más adelante.
 
-
+------------------------------------------------------------
+2) DEFINIR EL DOMINIO DE CORREO DEL SISTEMA (/etc/mailname)
+------------------------------------------------------------
 sudo sh -c 'hostname -f > /etc/mailname'
 
+Explicación:
+Guarda el FQDN (hostname completo) del servidor en /etc/mailname. Postfix lo usa como dominio de origen.
+
+------------------------------------------------------------
+3) CONFIGURAR POSTFIX PARA USAR GMAIL COMO RELAY (EDITAR main.cf)
+------------------------------------------------------------
 sudo nano /etc/postfix/main.cf
 
-myhostname       = hostname    # <-- usa tu FQDN real aquí
+Añadir o modificar estas líneas al final del archivo:
+
+myhostname       = tu-hostname.fqdn.aqui
 myorigin         = /etc/mailname
 inet_interfaces  = all
-inet_protocols            = ipv4
+inet_protocols   = ipv4
 smtp_address_preference   = ipv4
 relayhost = [smtp.gmail.com]:587
 smtp_sasl_auth_enable        = yes
@@ -24,13 +53,68 @@ smtp_use_tls                 = yes
 smtp_tls_security_level      = encrypt
 smtp_tls_CAfile              = /etc/ssl/certs/ca-certificates.crt
 
+Explicación:
+- myhostname: Nombre FQDN del servidor.
+- relayhost: Gmail SMTP en puerto 587.
+- smtp_sasl_auth_enable: habilita autenticación SMTP.
+- smtp_sasl_password_maps: ruta al archivo de credenciales.
+- smtp_use_tls: usa cifrado TLS para el envío.
 
+------------------------------------------------------------
+4) CREAR ARCHIVO DE CREDENCIALES SMTP (sasl_passwd)
+------------------------------------------------------------
 sudo nano /etc/postfix/sasl_passwd
 
+Contenido:
 [smtp.gmail.com]:587    tu.usuario@gmail.com:abcdefghijklmnop
 
+Explicación:
+- tu.usuario@gmail.com: tu correo Gmail.
+- abcdefghijklmnop: tu App Password de 16 caracteres.
+  (Generar en: https://myaccount.google.com/apppasswords)
+
+------------------------------------------------------------
+5) PROTEGER Y PROCESAR ARCHIVO DE CREDENCIALES
+------------------------------------------------------------
+sudo chmod 600 /etc/postfix/sasl_passwd
 sudo postmap /etc/postfix/sasl_passwd
 
+Explicación:
+- chmod 600: solo root puede leerlo.
+- postmap: genera /etc/postfix/sasl_passwd.db que usa Postfix.
+
+------------------------------------------------------------
+6) REINICIAR POSTFIX PARA APLICAR CAMBIOS
+------------------------------------------------------------
 sudo systemctl restart postfix
 
+------------------------------------------------------------
+7) ENVIAR CORREO DE PRUEBA
+------------------------------------------------------------
 echo "Michael Robles – 20250845" | mail -s "MambruSeFueALaGuerra" os3conadrian@gmail.com
+
+Explicación:
+- El texto entre comillas es el cuerpo del mensaje.
+- -s define el asunto.
+- Cambia el destinatario según necesites.
+
+------------------------------------------------------------
+8) VERIFICAR LOGS SI HAY PROBLEMAS
+------------------------------------------------------------
+sudo tail -n 50 /var/log/mail.log
+
+Posibles resultados:
+- status=sent: el correo se envió correctamente.
+- SASL authentication failed: credenciales incorrectas.
+- connect to smtp.gmail.com timed out: problema de red/firewall.
+- No worthy mechs found: faltan módulos SASL.
+
+------------------------------------------------------------
+NOTAS FINALES:
+------------------------------------------------------------
+- Si cambias el FQDN, actualiza /etc/mailname y reinicia Postfix.
+- Gmail no permite uso masivo de este método; es para notificaciones.
+- Verifica que el puerto 587 esté abierto en tu red.
+- Siempre usar App Password con Gmail + 2FA.
+
+FIN DE LA GUÍA.
