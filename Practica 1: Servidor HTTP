@@ -1,52 +1,78 @@
-sudo apt update
-sudo apt install apache2 -y
-sudo rm /var/www/html/index.html
-echo 'Hola Mundo' | sudo tee /var/www/html/index.html
+# ------------------ INSTALAR Y CONFIGURAR APACHE ------------------
+
+sudo apt update                                # Actualiza la lista de paquetes del sistema
+sudo apt install apache2 -y                   # Instala el servidor web Apache2
+
+sudo rm /var/www/html/index.html               # Elimina el archivo index.html por defecto de Apache
+echo 'Hola Mundo' | sudo tee /var/www/html/index.html  # Crea un nuevo index.html con el texto "Hola Mundo"
+
+# Copiamos la configuración por defecto de Apache para crear un nuevo VirtualHost
 sudo cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/michaelrobles.conf
+
+# Editamos el nuevo archivo de configuración de Apache
 sudo nano /etc/apache2/sites-available/michaelrobles.conf
+# --- Contenido dentro del archivo ---
+# <VirtualHost *:80>
+#     ServerAdmin michael20250845@localhost   # Email del administrador
+#     DocumentRoot /var/www/html              # Carpeta raíz del sitio
+#     ServerName michaelrobles.local          # Nombre del sitio
+# </VirtualHost>
 
-<VirtualHost *:80>
-    ServerAdmin michael20250845@localhost
-    DocumentRoot /var/www/html
-    ServerName michaelrobles.local
-</VirtualHost>
-
+# Activamos el nuevo sitio en Apache
 sudo a2ensite michaelrobles.conf
+
+# Recargamos Apache para aplicar cambios
 sudo systemctl reload apache2
 
 
-sudo apt install nginx -y
-#AQUI PARO APACHE PARA QUE NO CHOQUE CON NGINX
+# ------------------ INSTALAR Y CONFIGURAR NGINX ------------------
+
+sudo apt install nginx -y                      # Instala el servidor web NGINX
+
+# Detenemos Apache para evitar conflicto de puertos (ambos usan por defecto el 80)
 sudo systemctl stop apache2 
+
+# Creamos la carpeta para nuestro sitio en NGINX
 sudo mkdir -p /var/www/misitio_nginx
+
+# Creamos el archivo index.html con el contenido de la página
 sudo nano /var/www/misitio_nginx/index.html
+# --- Contenido dentro del archivo ---
+# <html>
+#   <body>
+#     <h1>Michael Robles</h1>
+#     <h2>Matrícula: 2025 0845</h2>
+#     <h2>Materia: Sistemas Operativos 3</h2>
+#     <p>Servidor NGINX en puerto 8080</p>
+#   </body>
+# </html>
 
-<html>
-  <body>
-    <h1>Michael Robles</h1>
-    <h2>Matrícula: 2025 0845</h2>
-    <h2>Materia: Sistemas Operativos 3</h2>
-    <p>Servidor NGINX en puerto 8080</p>
-  </body>
-</html>
-
+# Copiamos la configuración por defecto de NGINX para modificarla
 sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/misitio8080
+
+# Editamos el nuevo archivo de configuración
 sudo nano /etc/nginx/sites-available/misitio8080
+# --- Contenido dentro del archivo ---
+# server {
+#     listen 8080;                             # Puerto en el que escuchará NGINX
+#     server_name localhost;                   # Nombre del servidor
+#     root /var/www/misitio_nginx;              # Carpeta raíz del sitio
+#     index index.html;                         # Página de inicio
+#
+#     location / {
+#         try_files $uri $uri/ =404;            # Manejo de rutas y errores 404
+#     }
+# }
 
-server {
-    listen 8080;
-    server_name localhost;
-    root /var/www/misitio_nginx;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ =404;
-    }
-}
-
+# Hacemos un enlace simbólico para habilitar el nuevo sitio en NGINX
 sudo ln -s /etc/nginx/sites-available/misitio8080 /etc/nginx/sites-enabled/
+
+# Probamos la configuración de NGINX para asegurarnos de que no haya errores
 sudo nginx -t
+
+# Recargamos NGINX para aplicar cambios
 sudo systemctl reload nginx
+
 
 
 #CODIGOS DEL TROUBLESHOOTING INNECESARIOS
