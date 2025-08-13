@@ -1,55 +1,80 @@
-Configuración de CUPS + Impresora Virtual PDF en Ubuntu Server
-Servidor Ubuntu: 10.0.0.200
+CONFIGURACIÓN DE CUPS + IMPRESORA VIRTUAL PDF EN UBUNTU SERVER  
+Servidor Ubuntu: 10.0.0.200  
 
+------------------------------------------------------------
+1) INSTALAR CUPS Y EL MÓDULO DE IMPRESORA PDF
+------------------------------------------------------------
+sudo apt update                                   # Actualiza lista de paquetes
+sudo apt install cups cups-pdf -y                 # Instala CUPS (servidor de impresión) y soporte para impresora PDF
 
-sudo apt update
-sudo apt install cups cups-pdf -y
+------------------------------------------------------------
+2) CONFIGURAR CUPS PARA ADMINISTRACIÓN REMOTA Y COMPARTIR IMPRESORAS
+------------------------------------------------------------
+sudo cupsctl --remote-admin --remote-any --share-printers  
+# --remote-admin → Permite acceder al panel de CUPS desde otro equipo vía web  
+# --remote-any → Permite que cualquier host pueda conectarse a CUPS  
+# --share-printers → Comparte las impresoras configuradas con otros clientes
 
+------------------------------------------------------------
+3) DAR PERMISOS AL USUARIO Y ROOT PARA ADMINISTRAR CUPS
+------------------------------------------------------------
+sudo usermod -aG lpadmin michael20250845   # Agrega al usuario al grupo lpadmin (administradores de CUPS)
+sudo usermod -aG lpadmin root              # También agrega root al grupo lpadmin
 
+------------------------------------------------------------
+4) REINICIAR Y VERIFICAR EL SERVICIO CUPS
+------------------------------------------------------------
+sudo systemctl restart cups    # Reinicia el servicio para aplicar cambios
+sudo systemctl status cups     # Verifica que CUPS esté activo y corriendo
 
-sudo cupsctl --remote-admin --remote-any --share-printers
+------------------------------------------------------------
+5) CONFIGURAR IMPRESORA DESDE UN NAVEGADOR EN EL CLIENTE
+------------------------------------------------------------
+# Abrir en el navegador:
+10.0.0.200:631
 
+# En el panel web:
+Administration → Add Printer  
+→ Continuar en modo no seguro (HTTPS opcional)  
+→ Autenticación:  
+   Usuario: michael20250845  
+   Contraseña: michael20250845  
 
-sudo usermod -aG lpadmin michael20250845
-sudo usermod -aG lpadmin root
+# Seleccionar la impresora:
+- CUPS-PDF (Virtual PDF Printer)  
+- Nombre: PDFlol  
+- Driver: Generic  
+- Modelo: Generic w/no options
 
+------------------------------------------------------------
+6) AGREGAR IMPRESORA DESDE WINDOWS (CLIENTE)
+------------------------------------------------------------
+Panel de Control → Dispositivos e impresoras → Agregar impresora  
 
+Si la impresora aparece automáticamente → probar impresión.  
+Si NO aparece:
+1. Click en "Mi impresora no está en la lista"  
+2. Agregar impresora usando dirección TCP/IP  
+   - Dirección IP: 10.0.0.200  
+3. Cuando pida el controlador:
+   - Fabricante: Generic  
+   - Impresora: Generic / PostScript Printer
 
-sudo systemctl restart cups
-sudo systemctl status cups
+------------------------------------------------------------
+7) PRUEBA DE IMPRESIÓN DESDE WORD (WINDOWS)
+------------------------------------------------------------
+- Abrir Word  
+- Guardar archivo como HOLA.docx  
+- Imprimir seleccionando la impresora CUPS (PDFlol)  
+- El archivo se guardará como PDF en el servidor
 
-
- En  navegador cliente:
-  10.0.0.200:631
- Administration → Add Printer.
-Continuar en modo no seguro
-Autentícacion:
-Usuario: michael20250845 
-Contrasena: michael20250845
- Selecciono CUPS-PDF (Virtual PDF Printer).
-Nombre:PDFlol
-Driver: Generic
-Modelo: Generic w/no options
-
-
- Panel de Control → Dispositivos e impresoras.
- Agregar impresora → si la impresora aparece sin darle a mi impresora no esta en la lista: Ve a la prueba de impresion
-Por el contrario si la impresora no está en la lista., seguir:
-Dar click en "Mi impresora no esta en la lista"
- Agregar impresora usando dirección TCP/IP:
-   Dirección IP: 10.0.0.200
- Cuando pida controlador:
-   Fabricante: Generic
-   Impresora: Generic / PostScript Printer.
-
-
-Word
-Guardar archivo como HOLA.docx
-Imprimir con impresora de cups
-
-Linux
-   ls -l /var/spool/cups-pdf/
-cd /var/spool/cups-pdf/ANONYMOUS
-ls 
+------------------------------------------------------------
+8) VERIFICAR ARCHIVO PDF EN EL SERVIDOR (UBUNTU)
+------------------------------------------------------------
+ls -l /var/spool/cups-pdf/         # Ver carpetas donde se guardan los PDF generados
+cd /var/spool/cups-pdf/ANONYMOUS   # Ir a la carpeta de documentos impresos anónimamente
+ls                                 # Listar archivos PDF generados
+# Ejemplo de archivo generado:
 Microsoft_Word_-_HOLA.docx.pdf
-cat Microsoft_Word_-_HOLA.docx.pdf
+
+cat Microsoft_Word_-_HOLA.docx.pdf  # Mostrar contenido binario del PDF (solo para verificar que existe)
